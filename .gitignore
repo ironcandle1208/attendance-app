@@ -1,5 +1,9 @@
+### frontend ###
 node_modules
 build
 npm-debug.log
 .env
 .DS_Store
+### playwright ###
+playwright-report
+test-results

@@ -1,40 +1,51 @@
+// Reactのフック、React Routerのコンポーネントをインポート
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+// フォーム管理ライブラリReact Hook Formをインポート
 import { useForm } from 'react-hook-form';
+// Zodと連携させるためのリゾルバーをインポート
 import { zodResolver } from '@hookform/resolvers/zod';
+// スキーマ定義・バリデーションライブラリZodをインポート
 import { z } from 'zod';
+// データフェッチライブラリReact Queryのフックをインポート
 import { useMutation, useQueryClient } from 'react-query';
+// 日付フォーマットライブラリdate-fnsをインポート
 import { format } from 'date-fns';
+// 認証フック、APIサービス、型定義をインポート
 import { useAuth } from '../hooks/useAuth';
 import { eventsApi } from '../services/api';
 import { EventCreate } from '../types';
 
+// Zodを使用してイベント作成フォームのバリデーションスキーマを定義
 const eventSchema = z.object({
-  title: z.string().min(1, 'タイトルを入力してください'),
-  description: z.string().optional(),
-  event_date: z.string().min(1, '日時を入力してください'),
+  title: z.string().min(1, 'タイトルを入力してください'), // タイトルは必須
+  description: z.string().optional(), // 説明は任意
+  event_date: z.string().min(1, '日時を入力してください'), // 日時は必須
 }).refine((data) => {
+  // 日時が未来であるかをカスタムバリデーション
   const eventDate = new Date(data.event_date);
   const now = new Date();
   return eventDate > now;
 }, {
   message: '未来の日時を選択してください',
-  path: ['event_date'],
+  path: ['event_date'], // エラーメッセージをevent_dateフィールドに関連付ける
 });
 
+// イベント作成ページコンポーネント
 const CreateEvent = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [error, setError] = useState('');
+  const { user } = useAuth(); // 現在のユーザー情報を取得
+  const navigate = useNavigate(); // ページ遷移用のフック
+  const queryClient = useQueryClient(); // React Queryのクライアントインスタンス
+  const [error, setError] = useState(''); // APIエラーメッセージの状態
 
+  // React Hook Formの初期化
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
+    register, // 各フォーム要素を登録
+    handleSubmit, // フォーム送信時の処理
+    formState: { errors }, // バリデーションエラー
+    watch, // フォームの値の変更を監視
   } = useForm<EventCreate>({
-    resolver: zodResolver(eventSchema),
+    resolver: zodResolver(eventSchema), // Zodスキーマをバリデーションリゾルバーとして使用
     defaultValues: {
       title: '',
       description: '',
@@ -42,26 +53,32 @@ const CreateEvent = () => {
     },
   });
 
+  // React QueryのuseMutationを使用してイベント作成処理を定義
   const createEventMutation = useMutation(eventsApi.createEvent, {
     onSuccess: (data) => {
+      // 成功時：イベント一覧のキャッシュを無効化し、最新の状態に更新
       queryClient.invalidateQueries('events');
+      // 作成されたイベントの詳細ページに遷移
       navigate(`/events/${data.id}`);
     },
     onError: (err: any) => {
+      // 失敗時：エラーメッセージをセット
       setError(err.response?.data?.detail || 'イベントの作成に失敗しました');
     },
   });
 
+  // フォームの送信処理
   const onSubmit = async (data: EventCreate) => {
-    setError('');
-    createEventMutation.mutate(data);
+    setError(''); // エラーメッセージをリセット
+    createEventMutation.mutate(data); // イベント作成APIを呼び出し
   };
 
-  const watchedValues = watch();
+  const watchedValues = watch(); // フォームの値を監視してプレビューに反映
   const previewDate = watchedValues.event_date ? new Date(watchedValues.event_date) : null;
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* ナビゲーションバー */}
       <nav className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -91,11 +108,12 @@ const CreateEvent = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* フォーム */}
+            {/* イベント情報入力フォーム */}
             <div className="bg-white shadow sm:rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">イベント情報</h2>
                 
+                {/* APIエラー表示 */}
                 {error && (
                   <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                     {error}
@@ -103,6 +121,7 @@ const CreateEvent = () => {
                 )}
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  {/* イベントタイトル */}
                   <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700">
                       イベントタイトル <span className="text-red-500">*</span>
@@ -119,6 +138,7 @@ const CreateEvent = () => {
                     )}
                   </div>
 
+                  {/* 説明 */}
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                       説明
@@ -135,6 +155,7 @@ const CreateEvent = () => {
                     )}
                   </div>
 
+                  {/* 開催日時 */}
                   <div>
                     <label htmlFor="event_date" className="block text-sm font-medium text-gray-700">
                       開催日時 <span className="text-red-500">*</span>
@@ -150,6 +171,7 @@ const CreateEvent = () => {
                     )}
                   </div>
 
+                  {/* 送信・キャンセルボタン */}
                   <div className="flex space-x-3">
                     <button
                       type="submit"
@@ -169,7 +191,7 @@ const CreateEvent = () => {
               </div>
             </div>
 
-            {/* プレビュー */}
+            {/* 入力内容のリアルタイムプレビュー */}
             <div className="bg-white shadow sm:rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">プレビュー</h2>

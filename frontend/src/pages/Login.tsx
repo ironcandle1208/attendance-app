@@ -1,42 +1,53 @@
+// Reactのフック、React Routerのコンポーネントをインポート
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+// フォーム管理ライブラリReact Hook Formをインポート
 import { useForm } from 'react-hook-form';
+// Zodと連携させるためのリゾルバーをインポート
 import { zodResolver } from '@hookform/resolvers/zod';
+// スキーマ定義・バリデーションライブラリZodをインポート
 import { z } from 'zod';
+// 認証フックと型定義をインポート
 import { useAuth } from '../hooks/useAuth';
 import { LoginRequest } from '../types';
 
+// Zodを使用してログインフォームのバリデーションスキーマを定義
 const loginSchema = z.object({
-  email: z.string().email('有効なメールアドレスを入力してください'),
-  password: z.string().min(6, 'パスワードは6文字以上で入力してください'),
+  email: z.string().email('有効なメールアドレスを入力してください'), // メールアドレス形式のバリデーション
+  password: z.string().min(6, 'パスワードは6文字以上で入力してください'), // パスワードの最小文字数バリデーション
 });
 
+// ログインページコンポーネント
 const Login = () => {
-  const { user, login } = useAuth();
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { user, login } = useAuth(); // 認証情報（ユーザー情報とログイン関数）を取得
+  const [error, setError] = useState(''); // エラーメッセージの状態
+  const [loading, setLoading] = useState(false); // ローディング状態
 
+  // React Hook Formの初期化
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
+    register, // 各フォーム要素を登録
+    handleSubmit, // フォーム送信時の処理
+    formState: { errors }, // バリデーションエラー
   } = useForm<LoginRequest>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema), // Zodスキーマをバリデーションリゾルバーとして使用
   });
 
+  // 既にログインしている場合はダッシュボードにリダイレクト
   if (user) {
     return <Navigate to="/" replace />;
   }
 
+  // フォームの送信処理
   const onSubmit = async (data: LoginRequest) => {
     try {
-      setLoading(true);
-      setError('');
-      await login(data);
+      setLoading(true); // ローディング開始
+      setError(''); // エラーメッセージをクリア
+      await login(data); // ログイン処理を実行
     } catch (err: any) {
+      // ログイン失敗時：エラーメッセージをセット
       setError(err.response?.data?.detail || 'ログインに失敗しました');
     } finally {
-      setLoading(false);
+      setLoading(false); // ローディング終了
     }
   };
 
@@ -49,6 +60,7 @@ const Login = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          {/* エラーメッセージ表示 */}
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
@@ -56,6 +68,7 @@ const Login = () => {
           )}
           
           <div className="rounded-md shadow-sm -space-y-px">
+            {/* メールアドレス入力欄 */}
             <div>
               <input
                 {...register('email')}
@@ -67,6 +80,7 @@ const Login = () => {
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
               )}
             </div>
+            {/* パスワード入力欄 */}
             <div>
               <input
                 {...register('password')}
@@ -81,6 +95,7 @@ const Login = () => {
           </div>
 
           <div>
+            {/* ログインボタン */}
             <button
               type="submit"
               disabled={loading}
@@ -90,6 +105,7 @@ const Login = () => {
             </button>
           </div>
 
+          {/* 新規登録へのリンク */}
           <div className="text-center">
             <Link
               to="/register"
