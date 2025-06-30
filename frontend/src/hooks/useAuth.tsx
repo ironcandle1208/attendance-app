@@ -64,14 +64,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 新規登録処理
   const register = async (userData: RegisterRequest) => {
-    const user = await authApi.register(userData);
+    await authApi.register(userData); // ユーザー登録
     // 登録後、自動的にログイン
     const tokenData = await authApi.login({
       email: userData.email,
       password: userData.password,
     });
     localStorage.setItem('access_token', tokenData.access_token);
-    setUser(user);
+    // ログイン後、現在のユーザー情報を取得してsetUser
+    const currentUser = await authApi.getCurrentUser();
+    setUser(currentUser);
   };
 
   // ログアウト処理

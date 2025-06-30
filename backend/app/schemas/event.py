@@ -42,8 +42,8 @@ class Event(EventBase):
 
 # 出欠情報を含むイベントのレスポンススキーマ
 class EventWithAttendances(Event):
-    # 出欠リスト。循環参照を避けるため、文字列で型を指定
-    attendances: List["AttendanceWithUser"] = []
+    # 出欠リスト。循環参照を避けるため、forwardrefで型を指定
+    attendances: List['AttendanceWithUser'] = []
 
     class Config:
         from_attributes = True

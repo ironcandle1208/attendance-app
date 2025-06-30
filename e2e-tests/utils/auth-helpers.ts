@@ -11,8 +11,9 @@ export async function registerUser(page: Page, userData: typeof testUsers.user1)
   await page.click('button[type="submit"]');
   
   // 登録成功後、ダッシュボードにリダイレクトされることを確認
-  await expect(page).toHaveURL('/');
+  // ユーザー名が表示されるまで待つことで、リダイレクト完了を保証
   await expect(page.locator('text=こんにちは、' + userData.name + 'さん')).toBeVisible();
+  await expect(page).toHaveURL('/');
 }
 
 export async function loginUser(page: Page, userData: typeof testUsers.user1) {
